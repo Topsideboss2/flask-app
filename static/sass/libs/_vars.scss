@@ -1,0 +1,48 @@
+///
+/// Wide Angle by Pixelarity
+/// pixelarity.com | hello@pixelarity.com
+/// License: pixelarity.com/license
+///
+
+// Misc.
+	$misc: (
+		z-index-base:		900
+	);
+
+// Duration.
+	$duration: (
+		menu:				0.5s,
+		slider:				1.5s,
+		transition:			0.2s
+	);
+
+// Size.
+	$size: (
+		border-radius:		4px,
+		element-height:		3.25rem,
+		element-margin:		2rem,
+		header-height:		3.25rem,
+		inner-width:		70rem,
+		menu-width:			20rem
+	);
+
+// Font.
+	$font: (
+		family:				('Open Sans', Arial, Helvetica, sans-serif),
+		family-fixed:		('Courier New', monospace),
+		family-heading:		('Open Sans Condensed', Arial, Helvetica, sans-serif),
+		weight:				400,
+		weight-bold:		700
+	);
+
+// Palette.
+	$palette: (
+		bg:					#0f0f0f,
+		bg-alt:				#1c1c1c,
+		fg:					rgba(255,255,255,0.70),
+		fg-bold:			#fff,
+		fg-light:			rgba(255,255,255,0.25),
+		border:				rgba(255,255,255,0.25),
+		border-bg:			rgba(255,255,255,0.075),
+		accent:				#b84752,
+	);
