@@ -17,7 +17,7 @@ COPY . .
 EXPOSE 5000
 
 # set environment variables
-ENV FLASK_APP=flaskblog.py
+ENV FLASK_APP=main.py
 
 # specifies the command to run when the Docker image is started 
 CMD ["flask", "run", "--host", "0.0.0.0"]
