@@ -1,0 +1,88 @@
+{% extends "generic.html" %}
+{% block title %}Effortlessly Sync Your Files{% endblock %}
+{% block main %}
+<!-- Main -->
+<div id="main" class="wrapper">
+    <div class="inner">
+        <h1 class="major">Effortlessly Sync Your Files</h1>
+        <span class="image fit"><img src="{{url_for('static', filename='images/Rsync.jpeg')}}" alt="" /></span>
+        <h2>What is Rsync?</h2>
+        <p>Rsync stands for 'Remote Sync'. It is a Linux-based tool that can be used to sync files between remote and/or local servers.</p>
+        <p>This comes in handy when one needs to migrate from one server to another without incurring any additional costs. Rsync can also be used to back-up data on another server. The purpose of creating a mirror of your server with Rsync is, if your main server fails, your backup server can take over to reduce the downtime of your website. This way of creating a backup is very good and effective for small and medium-sized web businesses.</p>
+        <h2>Using RSYNC</h2>
+        <p>I will be using Ubuntu 20.04 but the instructions should work on any modern Linux distribution.
+        <li>Main Server - 192.168.1.9</li>
+        <li>Backup Server - 192.168.1.5</li>
+        </p>
+        <h3>Step 1: Install Rsync</h3>
+        <p>Install Rsync on both servers with the following command.</p>
+        <pre><code>sudo apt-get install rsync</code></pre>
+        <blockquote>NB: Ensure you are not the root user for safe practices.</blockquote>
+        <p>If you are, kindly use the following command to create another user and a password:</p>
+        <pre><code>useradd {username}
+passwd {password}</code></pre>
+        <h3>Step 2: Setup SSH Password-less Login</h3>
+        <p>Using password-less login with SSH Keys will increase the trust between the two Linux servers for easy file synchronization or transfer.</p>
+        <p>First, generate a public and private key on the 192.168.1.5 server with the following command:</p>
+        <pre><code>ssh-keygen -t rsa -b 2048</code></pre>
+        <p>When prompted to enter a passphrase, don't provide one and hit ENTER to proceed without one.</p>
+        <p>Now once the public and private keys have been generated, we will share our public key with the main server (192.168.1.9) so that it can easily recognize the backup server and thus allows us to login without asking for a password while syncing data. Navigate to where the public key is saved, usually the /root/.ssh/ folder and use this command:</p>
+        <pre><code>ssh-copy-id -p 6000 -i ./id_rsa.pub {username}@192.168.1.9</code></pre>
+        <p>By default, the command will use port 22 for SSH. If your SSH port is mapped onto another port use the flag -p {port-number}</p>
+        <p>To specify the public key file, use the -i {filename} as shown above</p>
+        <h3>Step 3: Synchronize/Transfer the files</h3>
+        <p>The typical rsync format isn't very intimidating when broken down.</p>
+        <pre><code>rsync [option] [origin] [destination]</code></pre>
+        <p>Each Rsync command should begin with rsync. It is then followed by an option. Below is a list of basic Rsync options to familiarize yourself with.</p>
+        <div class="table-wrapper">
+            <table class="alt">
+                <thead>
+                    <tr>
+                        <th>Option</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>-a</td>
+                        <td>copy files recursively and preserve ownership of files when files are copied</td>
+                    </tr>
+                    <tr>
+                        <td>-v</td>
+                        <td>runs the verbose version of the command; all of the processes that are run will be written out for the user to read</td>
+                    </tr>
+                    <tr>
+                        <td>-z</td>
+                        <td>compress the data synced</td>
+                    </tr>
+                    <tr>
+                        <td>-h</td>
+                        <td>initiate rsync help</td>
+                    </tr>
+                    <tr>
+                        <td>-e</td>
+                        <td>tell rsync what shell to use</td>
+                    </tr>
+                    <tr>
+                        <td>-exclude="*.fileType"</td>
+                        <td>exclude all of a specific filetype. Replace filetype with the actual file type that should be excluded</td>
+                    </tr>
+                    <tr>
+                        <td>-delete</td>
+                        <td>delete any extraneous files from the destination directory</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <p>Each Rsync command should begin with rsync. It is then followed by an option. Below is a list of basic Rsync options to familiarize yourself with.</p>
+        <p>A few examples of commands you can use for your day-to-day use.</p>
+        <p>Here is a command you can use on the main server (192.168.1.9) to copy the /var/www/internmanagementsystem-b-backend/ directory from the main server to the backup server 192.168.1.5 in the /var/www/ims-backend/</p>
+        <pre><code>rsync -avzhe "ssh -p 10000" /var/www/internmanagementsystem-b-backend <username>@192.168.1.5:/var/www/ims-backend</code></pre>
+        <p>Here is the command you will use on the main server to synchronize all files that end with *.sql in the /var/www/ directory to save them in the 192.168.1.5 backup server in the /var/www/server9/databases directory:</p>
+        <pre><code>rsync -avzhe "ssh -p 10000" /var/www/*.sql <username>@192.168.1.5:/var/www/server9/databases/</code></pre>
+        <h2>In Conclusion</h2>
+        <p>Rsync is an essential tool when it comes to file-level operations. It is a flexible tool that will keep your directories in sync, minimize cost of transferring whole file changes, exclude what you do not want to synchronize and ensure your files are backed up by using these three simple steps.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

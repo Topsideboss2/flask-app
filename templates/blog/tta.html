@@ -1,0 +1,203 @@
+{% extends "generic.html" %}
+{% block title %}Deploying a Dynamic Website on AWS using a 3-Tier Architecture{% endblock %}
+{% block main %}
+<!-- Main -->
+<div id="main" class="wrapper">
+    <div class="inner">
+        <h1 class="major">Deploying a Dynamic Website on AWS using a 3-Tier Architecture</h1>
+        <blockquote><h3>How to create a web-tier, application-tier, and database-tier for a highly available and scalable architecture</h3></blockquote>
+        <span class="image fit"><img src="{{url_for('static', filename='images/DynamicWebsite.jpeg')}}" alt="" /></span>
+        
+        <h3>Introduction</h3>
+        
+        <p>The success of any application heavily relies on the architectural design, as it sets the foundation for scalability, security, and performance. One of the most commonly used architectures in the cloud industry is the three-tier architecture and Amazon Web Services (AWS) offers a comprehensive set of tools and services one can utilize. In this article, we will explore the AWS three-tier architecture and how it can help you build a scalable and reliable application. We'll dive into each tier's components and their roles, and we'll also discuss some best practices for designing and deploying a three-tier architecture on AWS. Let's get started.</p>
+        
+        <h3>Project Description</h3>
+        
+        <p>The project I will be hosting is an intern management system built on a LAMP stack that I worked on during my attachment period in Oaknet Business. One thing I came to appreciate during my time as a DevOps intern was that documenting is a huge part of working in this field. The sooner one starts to document the steps taken to deploy a project, the better it'll help them in the long run.</p>
+        
+        <p>AWS services used in this project include:
+            <li>VPC</li>
+            <li>Security Groups</li>
+            <li>EC2</li>
+            <li>NAT Gateway</li>
+            <li>RDS</li>
+            <li>Application Load Balancer</li>
+            <li>Route 53</li>
+            <li>Autoscaling Group</li>
+            <li>Certificate Manager</li>
+            <li>Among others...</li>
+        </p>
+        
+        <h3>Project Description</h3>
+
+        <p>First, create a custom VPC in the desired AWS Region. In my case, I used the us-east-1 region. The IP address I assigned for my VPC is 10.0.0.0/16. Therefore all my resources will have an IP address that is in this network. I went on to create and attach an Internet Gateway that will provide resources in our VPC with access to the internet.</p>
+
+        <blockquote>NB: Ensure you enable DNS hostname in your VPC</blockquote>
+
+        <p>According to our referenced architecture above, our VPC should have public and private subnets in each Availability Zone. The resources in these public subnets can be accessed through the internet. These resources are our NAT-gateways, bastion host and load balancers. It is also important to note that there is a shared route table for our public subnets. On this route table, we should create a route to 0.0.0.0/0 pointing to the internet gateway we created.</p>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Subnet</th>
+                        <th>IP Address</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Public Subnet AZ1</td>
+                        <td>10.0.0.0/24</td>
+                    </tr>
+                    <tr>
+                        <td>Public Subnet AZ2</td>
+                        <td>10.0.1.0/24</td>
+                    </tr>
+                    <tr>
+                        <td>Private Web Subnet AZ1</td>
+                        <td>10.0.2.0/24</td>
+                    </tr>
+                    <tr>
+                        <td>Private Web Subnet AZ2</td>
+                        <td>10.0.3.0/24</td>
+                    </tr>
+                    <tr>
+                        <td>Private App Subnet AZ1</td>
+                        <td>10.0.4.0/24</td>
+                    </tr>
+                    <tr>
+                        <td>Private App Subnet AZ2</td>
+                        <td>10.0.5.0/24</td>
+                    </tr>
+                    <tr>
+                        <td>Private DB Subnet AZ1</td>
+                        <td>10.0.6.0/24</td>
+                    </tr>
+                    <tr>
+                        <td>Private DB Subnet AZ2</td>
+                        <td>10.0.7.0/24</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <p>In our first-tier, we will host our web-servers in private subnets. Namely, "Private-Web-Subnet-AZ1" and "Private-Web-Subnet-AZ2". Each Availabilty Zone has its own subnet.</p>
+        
+        <p>In our second-tier, we will now host app-servers in private subnets. Namely, "Private-App-Subnet-AZ1" and "Private-App-Subnet-AZ2". Each AZ has its own subnet.</p>
+        
+        <p>In our third-tier, we will have our database hosted in private subnets as well. Namely, "Private-DB-Subnet-AZ1" and "Private-DB-Subnet-AZ2". And you might've guessed it already, each AZ has its own subnet.</p>
+        
+        <p>The private subnets we have created will not be directly accessible from the internet for security purposes. Now, you might ask yourself, "How is this gonna work if we can't even access our servers and database?" Well, this is where our NAT-gateways(located in the public subnets) come in. The NAT gateways will translate the private IP to a public IP that is going to be routed through the internet.</p>
+        
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>NAT-gateway</th>
+                        <th>Subnet</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>NAT-gateway AZ1</td>
+                        <td>Public Subnet AZ1(10.0.0.0/24)</td>
+                    </tr>
+                    <tr>
+                        <td>NAT-gateway AZ2</td>
+                        <td>Public Subnet AZ2(10.0.1.0/24)</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <p>Just like how our public subnet has a route table, there is also a shared route table for our private subnets. In our private route table we will add a route to 0.0.0.0/0 pointing to the NAT-gateways corresponding to each AZ.</p>
+        
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Security Group</th>
+                        <th>Port</th>
+                        <th>Source</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>ALB Security Group</td>
+                        <td>80, 443</td>
+                        <td>0.0.0.0/0</td>
+                    </tr>
+                    <tr>
+                        <td>SSH Security Group</td>
+                        <td>22</td>
+                        <td>{Your Security Group}</td>
+                    </tr>
+                    <tr>
+                        <td>Server Security Group</td>
+                        <td>80, 443</td>
+                        <td>ALB Security Group</td>
+                    </tr>
+                    <tr>
+                        <td> </td>
+                        <td>22</td>
+                        <td>SSH Security Group</td>
+                    </tr>
+                    <tr>
+                        <td>Database Security Group</td>
+                        <td>3306</td>
+                        <td>Server Security Group</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <h3>Project Description</h3>
+        
+        <p>When we created our VPC, it came with a default security group. But we need to create additional security groups for our resources. The work of our security groups is to control the traffic that is allowed to reach and leave the resources that it is associated with. So we create a securtiy group for each of our resource types</p>
+        
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Route Table</th>
+                        <th>Destination</th>
+                        <th>Target</th>
+                        <th>Subnet Associations</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Private Route Table(Default)</td>
+                        <td>10.0.0.0/16</td>
+                        <td>local</td>
+                        <td>Default</td>
+                    </tr>
+                    <tr>
+                        <td>Public Route Table</td>
+                        <td>0.0.0.0/0</td>
+                        <td>Internet Gateway</td>
+                        <td>10.0.0.0/24 & 10.0.1.0/24</td>
+                    </tr>
+                    <tr>
+                        <td>Private Route Table AZ1</td>
+                        <td>0.0.0.0/0</td>
+                        <td>NAT-gateway AZ1</td>
+                        <td>10.0.2.0/24 10.0.4.0/24 10.0.6.0/24</td>
+                    </tr>
+                    <tr>
+                        <td>Private Route Table AZ2</td>
+                        <td>0.0.0.0/0</td>
+                        <td>NAT-gateway AZ2</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h3>Create RDS Instance</h3>
+
+        <p>We are using MySQL RDS database. We start by creating a subnet group for our database and specifying where our database can be accessed from. We will specify our database subnets in this subnet goup. That is "Private-DB-Subnet-AZ1" and "Private-DB-Subnet-AZ2"</p>
+
+    </div>
+</div>
+{% endblock %}
